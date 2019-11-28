@@ -8,10 +8,11 @@ FILENAME = 'treillis123';
 
 %% Definition du treillis
 
-constLen = 3;
-codePoly = [7,5];
-codeFeedback = 7;
-trellis =  poly2trellis(constLen,codePoly,codeFeedback);
+constLen = 7; % nombre de cases mémoires + le nombre d'entrée
+codePoly = [133, 171];
+% codeFeedback = 7;
+% trellis =  poly2trellis(constLen,codePoly,codeFeedback);
+trellis =  poly2trellis(constLen,codePoly);
 codeMemory = constLen-1;
 
 
@@ -27,7 +28,7 @@ codeMemory = constLen-1;
 % trellis =  poly2trellis(constLen,codePoly,codeFeedback);
 % codeMemory = constLen-1;
 
-%% Parametres du trac�
+%% Parametres du trac�
 nbrTrellisSection = 1;
 boolSoftDec = 0;
 
@@ -54,8 +55,8 @@ boolDebug = 0; % Booleen affichage du debug (affichage du nom des noeuds sous le
 
 boolValues = 0;% Booleen affichage des valeurs
 
-boolOpening = 0; % Booleen pour indiquer l'ouverture
-boolClosing = 0; % Booleen pour indiquer la fermeture
+boolOpening = 1; % Booleen pour indiquer l'ouverture
+boolClosing = 1; % Booleen pour indiquer la fermeture
 
 boolDispPath = 0;
 boolDispStateInfo = 1;
@@ -93,7 +94,7 @@ end
 
 for iSec = 0:nSecTot-1- codeMemory*boolClosing
     nextState = [];
-    
+
     totState(indFirstState:indFirstState+length(vecState)-1,2) = vecState;
     totState(indFirstState:indFirstState+length(vecState)-1,1) = iSec;
     for iState = 1:length(vecState)
@@ -106,7 +107,7 @@ for iSec = 0:nSecTot-1- codeMemory*boolClosing
             end
         end
         nextState = [nextState,tempNextState];
-        
+
     end
     indFirstState = indFirstState + length(vecState);
     vecState = unique(nextState);
@@ -115,7 +116,7 @@ end
 
 for iSec = nSecTot - codeMemory*boolClosing:nSecTot-1
     nextState = [];
-    
+
     totState(indFirstState:indFirstState+length(vecState)-1,2) = vecState;
     totState(indFirstState:indFirstState+length(vecState)-1,1) = iSec;
     for iState = 1:length(vecState)
@@ -132,9 +133,9 @@ for iSec = nSecTot - codeMemory*boolClosing:nSecTot-1
         else
             tempNextState = trellis.nextStates(vecState(iState)+1,2);
         end
-        
+
         nextState = [nextState,tempNextState];
-        
+
     end
     indFirstState = indFirstState + length(vecState);
     vecState = unique(nextState);
@@ -159,7 +160,7 @@ totOutputFromStates = zeros(nStateWithTransition ,trellis.numInputSymbols);% Nom
 
 for iState = 1:nStateWithTransition
     if iState > nStateTot-boolClosing*((nTrans^(codeMemory+1) - 1)/(nTrans-1))
-        
+
         testBit = de2bi(trellis.nextStates(totState(iState,2)+1,1),codeMemory);
         if testBit(codeMemory) == 0
             totTransition(iState,1) = trellis.nextStates(totState(iState,2)+1,1);
@@ -168,14 +169,14 @@ for iState = 1:nStateWithTransition
             totTransition(iState,2) = trellis.nextStates(totState(iState,2)+1,2);
             totOutputFromStates(iState,2) = trellis.outputs(totState(iState,2)+1,2);
         end
-        
+
     else
         for iTrans = 1:trellis.numInputSymbols
             totTransition(iState,iTrans) = trellis.nextStates(totState(iState,2)+1,iTrans);
             totOutputFromStates(iState,iTrans) = trellis.outputs(totState(iState,2)+1,iTrans);
         end
     end
-    
+
 end
 
 %% Definition des constantes
@@ -198,7 +199,7 @@ PATHEDGESTYLE = '\\tikzset{pathEdgeStyle/.style={draw=PATHCOLOR,-latex,shorten >
 PATHNODE = '\\node [pathNodeStyle] (Nx%dy%d) at (%d,%d) {};\n';
 PATHEDGE = '\\path [pathEdgeStyle,%s] (Nx%dy%d) -- (Nx%dy%d) node [edgeLabelStyle] {\\footnotesize $%s$};\n';
 
-ENDTIKZ = '\\end{tikzpicture}\n'; 
+ENDTIKZ = '\\end{tikzpicture}\n';
 ENDDOC = ' \\end{document}';
 
 NODESTYLE = strrep(NODESTYLE,'NODECOLOR',nodeColor);
@@ -239,7 +240,7 @@ for iState = 1:nStateTot
         else
             fprintf(fid, NODE, totState(iState,1), totState(iState,2), totState(iState,1)*2, -totState(iState,2)*1.5);
         end
-        
+
     else
         fprintf(fid, NODE, totState(iState,1), totState(iState,2), totState(iState,1)*2, -totState(iState,2)*1.5);
         %         end
@@ -251,10 +252,10 @@ fprintf(fid, '\n %% Trace les bords \n');
 
 for iState = 1:nStateWithTransition
     for iTrans = 1:trellis.numInputSymbols
-        
+
         iTypeTransition = mod(iTrans-1,numTypeTransition)+1;
         etiq = dec2bin(totOutputFromStates(iState,iTrans),log2(trellis.numOutputSymbols));
-        
+
         if boolSoftDec == 1
             etiq = strrep(etiq,'0','+');
             etiq = strrep(etiq,'1','-');
@@ -266,7 +267,7 @@ for iState = 1:nStateWithTransition
                 else
                     fprintf(fid, EDGE, typeTransition{iTypeTransition}, totState(iState,1), totState(iState,2),totState(iState,1)+1,totTransition(iState,iTrans), etiq);
                 end
-                
+
             else
                 fprintf(fid, EDGE, typeTransition{iTypeTransition}, totState(iState,1), totState(iState,2),totState(iState,1)+1,totTransition(iState,iTrans), etiq);
                 %         end

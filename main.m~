@@ -8,30 +8,15 @@ R = 1; % Rendement de la communication (R=1 au debut pour BPSK)
 % R = 1/2; % Rendement quand code convolutif treillis ouvert
 
 
-constlen1 = 2; % les bits de terminaison du treillis = longueur de contrainte-1
-% En vrai c'est le nombre de cases mémoire + 1 pour l'entrée
-treillisStruct1 = poly2trellis(constlen1, [2 3]);
-
-constlen2 = 3;
-treillisStruct2 = poly2trellis(constlen2, [7 5]);
-constlen3 = 4;
-treillisStruct3 = poly2trellis(constlen3, [13 15]);
-constlen4 = 7;
-treillisStruct4 = poly2trellis(constlen4, [133 171]);
-
-constlen = constlen4;
-treillisStruct = treillisStruct4;
-
-d_spec = distspec(treillisStruct);
-d_min_hamming = d_spec.dfree
-
+constlen1 = 3 % les bits de terminaison du treillis = longueur de contrainte-1
+treillisStruct1 = poly2trellis(constlen1, [7 5]);
 
 pqt_par_trame = 100; % Nombre de paquets par trame
 bit_par_pqt   = 330;% Nombre de bit par paquet
 K = pqt_par_trame*bit_par_pqt; % Nombre de bits de message par trame
-% K = 10
-m = constlen - 1 % bits (avant codage) de fermeture == nombre de cases mémoire
-R = K/(2*(m + K))
+
+m = 2 % bits (avant codage)
+R = K/(2(m + K));
 
 N = K/R; % Nombre de bits cod�s par trame (cod�e) nb bit besoin pour une trame entière après codage.
 
@@ -49,7 +34,7 @@ EbN0dB_step = 1;% Pas de EbN0
 
 nbr_erreur  = 100;  % Nombre d'erreurs � observer avant de calculer un BER
 nbr_bit_max = 100e6;% Nombre de bits max � simuler
-ber_min     = 3e-5; % BER min
+ber_min     = 0.003e-5; % BER min
 
 EbN0dB = EbN0dB_min:EbN0dB_step:EbN0dB_max;     % Points de EbN0 en dB � simuler
 EbN0   = 10.^(EbN0dB/10);% Points de EbN0 � simuler
@@ -61,8 +46,8 @@ EsN0dB = 10*log10(EsN0); % Points de EsN0 en dB � simuler
 
 %% Construction de l'encodeur convolutif
 encod_conv = comm.ConvolutionalEncoder(...
-    'TrellisStructure', treillisStruct, ...
-    'TerminationMethod', 'Truncated');
+    'TrellisStructure', treillisStruct1, ...
+    'TerminationMethod', 'Terminated');
 
 %% Construction du modulateur
 mod_psk = comm.PSKModulator(...
@@ -81,9 +66,9 @@ demod_psk = comm.PSKDemodulator(...
 
 %% Construction du décodeur Viterbi
 decod_viter = comm.ViterbiDecoder(...
-    'TrellisStructure'  , treillisStruct , ...
-    'TerminationMethod' , 'Truncated'    , ...
-    'TracebackDepth'    , constlen*5+1   , ...
+    'TrellisStructure'  , treillisStruct1 , ...
+    'TerminationMethod' , 'Terminated'    , ...
+    'TracebackDepth'    , constlen1*5+1   , ...
     'InputFormat'       , 'Unquantized'   );
 
 
@@ -199,7 +184,5 @@ ylim([1e-6 1])
 grid on
 xlabel('$\frac{E_b}{N_0}$ en dB','Interpreter', 'latex', 'FontSize',14)
 ylabel('TEB','Interpreter', 'latex', 'FontSize',14)
-title('TEB pour chaque code');
-legend('C(2,3)_8');
 
 save('NC.mat','EbN0dB','ber')
